@@ -9,6 +9,7 @@ use std::{
 #[derive(Serialize, Deserialize, Debug)]
 struct Event {
     id: String,
+
     /// UTC Timestamp of the event
     ts: u64,
     event: StateEvent,
@@ -27,7 +28,7 @@ enum StateEvent {
     Departure { ship: String },
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, Copy)]
+#[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq)]
 #[serde(rename_all = "snake_case")]
 enum Port {
     SanFrancisco,
@@ -129,4 +130,65 @@ fn main() {
         },
         &mut state,
     );
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn it_can_process_events() {
+        let mut state = State {
+            ships: HashMap::default(),
+        };
+        process_event(
+            StateEvent::EnrolShip {
+                ship: "hms_at_sea".into(),
+            },
+            &mut state,
+        );
+        process_event(
+            StateEvent::EnrolShip {
+                ship: "hms_hello".into(),
+            },
+            &mut state,
+        );
+        process_event(
+            StateEvent::Arrival {
+                ship: "hms_at_sea".into(),
+                port: Port::SanFrancisco,
+            },
+            &mut state,
+        );
+        process_event(
+            StateEvent::Arrival {
+                ship: "hms_hello".into(),
+                port: Port::Tokyo,
+            },
+            &mut state,
+        );
+        process_event(
+            StateEvent::Departure {
+                ship: "hms_at_sea".into(),
+            },
+            &mut state,
+        );
+
+        assert_eq!(
+            state.ships.len(),
+            2,
+            "there should be 2 ships but got {}",
+            state.ships.len()
+        );
+        assert!(
+            state.ships.get("hms_at_sea".into()).unwrap().port.is_none(),
+            "hms_at_sea should be at sea",
+        );
+
+        assert_eq!(
+            state.ships.get("hms_hello".into()).unwrap().port,
+            Some(Port::Tokyo),
+            "hms_hello should be docked at SanFranciso",
+        );
+    }
 }
