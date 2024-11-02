@@ -188,7 +188,7 @@ mod tests {
         assert_eq!(
             state.ships.get("hms_hello".into()).unwrap().port,
             Some(Port::Tokyo),
-            "hms_hello should be docked at SanFranciso",
+            "hms_hello should be docked at Tokyo",
         );
     }
 }
